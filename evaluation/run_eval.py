@@ -99,11 +99,21 @@ def _git(*args: str) -> str:
     return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True, check=True).stdout
 
 
-def _metadata(args: argparse.Namespace, model: str, n: int) -> dict[str, Any]:
+async def _model_info(client: OllamaClient) -> dict[str, Any]:
+    listing = await client.client.list()
+    for m in listing.models:
+        if m.model == client.model:
+            return {"digest": m.digest, "quantization": m.details.quantization_level if m.details else None}
+    raise RuntimeError(f"model {client.model} is not available in Ollama")
+
+
+def _metadata(args: argparse.Namespace, model: str, model_info: dict[str, Any], n: int) -> dict[str, Any]:
     status = _git("status", "--porcelain").splitlines()
     return {
         "mode": args.mode,
         "model": model,
+        "model_digest": model_info["digest"],
+        "model_quantization": model_info["quantization"],
         "temperature": args.temperature,
         "seed": args.seed,
         "runs": args.runs,
@@ -282,7 +292,7 @@ def _pct(x: float | None) -> str:
 def _render_md(report: dict[str, Any]) -> str:
     m, agg = report["metadata"], report["aggregate"]
     lines = [f"# Eval report — {m['mode']} — {report['timestamp']}", ""]
-    lines += [f"- model `{m['model']}`, temperature {m['temperature']}, seed {m['seed']}, runs {m['runs']}",
+    lines += [f"- model `{m['model']}` (digest `{m['model_digest'][:12]}`, {m['model_quantization']}), temperature {m['temperature']}, seed {m['seed']}, runs {m['runs']}",
               f"- commit `{m['git_commit'][:8]}` dirty={m['git_dirty']} untracked={m['git_untracked']}",
               f"- prompt sha `{m['triage_prompt_sha']}`, seed examples `{m['seed_examples_hash']}`, emails {m['n_emails']}",
               f"- consistency: {report['consistency']['identical_emails']}/{m['n_emails']} emails identical across runs", ""]
@@ -327,7 +337,7 @@ async def main() -> None:
         spam_decider=run_spam_decision,
         draft_agent=_NoDraft(),
     )
-    metadata = _metadata(args, client.model, len(rows))
+    metadata = _metadata(args, client.model, await _model_info(client), len(rows))
 
     runs: list[list[dict[str, Any]]] = []
     for i in range(args.runs):
