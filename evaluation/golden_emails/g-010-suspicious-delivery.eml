@@ -1,0 +1,14 @@
+Message-ID: <g-010@parcel-redelivery.example>
+From: "Delivery Notice" <no-reply@parcel-redelivery-track.click>
+Subject: Your package could not be delivered — action required
+Date: Tue, 02 Jun 2026 11:30:00 -0400
+To: user@example.edu
+Content-Type: text/plain; charset="utf-8"
+
+Dear customer,
+
+We attempted to deliver your parcel today but were unable to complete it. To reschedule delivery, please confirm your details here:
+
+http://parcel-redelivery-track.click/reschedule?ref=7741
+
+If we do not hear from you within 48 hours the parcel will be returned to sender.
