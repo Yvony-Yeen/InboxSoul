@@ -1,0 +1,32 @@
+diff --git a/_dev_daemon.py b/_dev_daemon.py
+index 5e5e2c04..7fb71e13 100644
+--- a/_dev_daemon.py
++++ b/_dev_daemon.py
+@@ -10,7 +10,6 @@ from __future__ import annotations
+ 
+ import logging
+ import os
+-from functools import partial
+ from pathlib import Path
+ 
+ from apscheduler.schedulers.asyncio import AsyncIOScheduler
+@@ -19,7 +18,7 @@ from pydantic import BaseModel
+ 
+ from src.agents.draft import DraftAgent
+ from src.agents.spam_decision import run_spam_decision
+-from src.agents.triage import run_triage
++from src.agents.triage_fewshot import build_seeded_store, make_fewshot_triage_runner
+ from src.ingestion.cleaner import clean_message
+ from src.ingestion.gmail_auth import get_gmail_service
+ from src.ingestion.gmail_source import GmailSource
+@@ -33,8 +32,9 @@ from src.review.poller import run_once
+ logging.basicConfig(level=logging.INFO)
+ 
+ _llm = OllamaClient()
++_triage_store = build_seeded_store()
+ _orch = Orchestrator(
+-    triage_runner=partial(run_triage, llm_client=_llm),
++    triage_runner=make_fewshot_triage_runner(_llm, _triage_store),
+     spam_decider=run_spam_decision,
+     draft_agent=DraftAgent(llm=_llm),
+ )
