@@ -23,3 +23,20 @@ results after it — re-run the evaluation.
 | g-010 | `risk_flags` | `external_link` | `external_link, deadline, credential_request` | "Within 48 hours the parcel will be returned" is a deadline (flags describe content, not authenticity; Q4). "Confirm your details" is a credential request (Q6). |
 | g-012 | `risk_flags` | `legal, attachment, deadline` | `legal, deadline` | "Attached is…" with no real MIME attachment does not count as `attachment`. |
 | g-015 | `risk_flags` | `school, deadline` | `money, school, deadline` | Financial aid counts as `money`. |
+
+## 2026-11-20 (category rules)
+
+### Labels
+| id | Field | Before | After | Reason |
+|---|---|---|---|---|
+| g-005 | `category` | `promotion` | `spam` | Category rule 1: `definite_spam` → `spam`, even for marketing. |
+| g-010 | `category` | `spam` | `system` | Only `definite_spam` is `spam`; this `suspicious` delivery notice fits no topic, so it is an automated institutional notice. |
+| g-017 | `category` | `spam` | `work` | Only `definite_spam` is `spam`; this `suspicious` business proposal is categorized by its topic. |
+
+### Structure
+| Scope | Change | Reason |
+|---|---|---|
+| `golden_set.jsonl` (all 17 rows) | Added `"group": "legacy"` | Reports break results down by group; the synthetic set uses the other groups. |
+
+`recommended_action` of all 17 legacy emails was re-checked against the §4a principle in
+`LABELING_GUIDE.md`; none needed a change.
