@@ -47,15 +47,15 @@ All enum strings are case-sensitive and must match exactly. Anything outside the
 
 Flag meanings:
 
-- `money` — payment, transfer, invoice, refund, salary, bank balance, crypto, gift card.
-- `account` — login credentials, password reset, 2FA, account lockout, ownership change.
-- `deadline` — a date or window after which something bad happens (late fees, lost slot, missed exam).
+- `money` — a payment, charge, transfer, refund, or funding that concerns the recipient (invoices, bills, salary, tuition, financial aid, bank or card transactions, crypto, gift cards). Product prices in ads do not count.
+- `account` — access to and security of the recipient's accounts: sign-in, passwords, two-factor authentication, lockout or suspension, and recovery. Financial transactions (charges, balances, deposits) are `money`, not `account`.
+- `deadline` — a time limit by which the recipient must take an action (pay, apply, register, submit, sign, respond, confirm), whether real or claimed. Limited-time promotions do not count.
 - `legal` — contracts, lawsuits, NDAs, subpoenas, terms-of-service that need acknowledgment.
 - `school` — anything from a university/school official channel (admissions, advisor, registrar, financial aid).
 - `hr` — offers, terminations, benefits, payroll, performance reviews, work-visa matters.
-- `external_link` — clickable links to non-trusted or shortened domains.
+- `external_link` — the body contains any http:// or https:// link, trusted or not.
 - `attachment` — the email references attachments (real or claimed).
-- `credential_request` — asks for password, SSN, ID, or verification of secrets.
+- `credential_request` — asks the recipient to provide or confirm a password, verification code, login details, or personal or account information.
 - `sensitive_personal_info` — exposes or requests SSN, address, DOB, medical, etc.
 
 If a flag could plausibly apply, include it. Do not skip a flag because you are "mostly sure" it does not apply.
