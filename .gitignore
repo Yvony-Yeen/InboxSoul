@@ -40,7 +40,8 @@ data/
 *.db
 chroma/
 
-# OAuth token caches — they contain refresh tokens, never commit
+# OAuth client secrets & token caches — never commit
+credentials.json
 *token*.json
 !tests/**/*.json
 
