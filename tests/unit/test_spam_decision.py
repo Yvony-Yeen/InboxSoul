@@ -8,6 +8,7 @@ import pytest
 
 from src.agents.spam_decision import run_spam_decision
 from src.pipeline.schemas import (
+    HIGH_RISK_FLAGS,
     Category,
     Priority,
     RecommendedAction,
@@ -51,6 +52,26 @@ def test_high_risk_flag_blocks_auto_junk_even_when_definite_spam_high_confidence
     assert result.confidence == pytest.approx(0.99)
 
 
+@pytest.mark.parametrize("risk_flag", sorted(HIGH_RISK_FLAGS, key=lambda r: r.value))
+@pytest.mark.parametrize(
+    ("spam_level", "confidence"),
+    [
+        (SpamLevel.NOT_SPAM, 0.95),
+        (SpamLevel.DEFINITE_SPAM, 1.0),
+        (SpamLevel.DEFINITE_SPAM, 0.50),
+        (SpamLevel.SUSPICIOUS, 0.60),
+    ],
+    ids=["not_spam", "definite_spam-conf1.0", "definite_spam-low_conf", "suspicious"],
+)
+def test_each_high_risk_flag_alone_requires_human_check(
+    risk_flag: RiskFlag, spam_level: SpamLevel, confidence: float
+):
+    triage = _make_triage(spam_level=spam_level, confidence=confidence, risk_flags=[risk_flag])
+    result = run_spam_decision(triage)
+    assert result.decision == SpamDecision.REQUIRE_HUMAN_CHECK
+    assert result.blocked_by_risk_flags == [risk_flag]
+
+
 def test_definite_spam_at_threshold_moves_to_junk():
     triage = _make_triage(spam_level=SpamLevel.DEFINITE_SPAM, confidence=0.90)
     result = run_spam_decision(triage)
@@ -66,6 +87,13 @@ def test_definite_spam_above_threshold_moves_to_junk():
 
 def test_definite_spam_below_threshold_requires_human_check():
     triage = _make_triage(spam_level=SpamLevel.DEFINITE_SPAM, confidence=0.80)
+    result = run_spam_decision(triage)
+    assert result.decision == SpamDecision.REQUIRE_HUMAN_CHECK
+    assert result.blocked_by_risk_flags == []
+
+
+def test_definite_spam_just_below_threshold_requires_human_check():
+    triage = _make_triage(spam_level=SpamLevel.DEFINITE_SPAM, confidence=0.8999)
     result = run_spam_decision(triage)
     assert result.decision == SpamDecision.REQUIRE_HUMAN_CHECK
     assert result.blocked_by_risk_flags == []
