@@ -27,6 +27,12 @@ All enum strings are case-sensitive and must match exactly. Anything outside the
 
 ### Field guidance
 
+- `category` — apply these in order and use the first that fits:
+  1. `spam` — only when `spam_level` is `definite_spam` (junk, phishing, impersonation), even if the topic is finance or account security. A `suspicious` email is categorized by its topic instead.
+  2. `work` / `school` / `finance` — the email fits one of these topics. `work` and `school` come before `finance`: payroll from an employer is `work`; tuition or financial aid is `school`. Use `finance` only for purely financial dealings (banks, cards, bills, brokerages, shop refunds).
+  3. `promotion` — legitimate promotions or marketing the recipient opted into.
+  4. `system` — an automated notice from a service or institution that fits none of the above.
+  5. `personal` — an email written by an individual that fits none of the above.
 - `summary` — one neutral sentence, no opinions, no calls to action.
 - `key_points` — atomic, self-contained facts. Each one stands on its own and is meaningful out of context.
 - `priority` — urgency to the **recipient**, not the sender's tone or self-described importance.
@@ -48,14 +54,14 @@ All enum strings are case-sensitive and must match exactly. Anything outside the
 Flag meanings:
 
 - `money` — a payment, charge, transfer, refund, or funding that concerns the recipient (invoices, bills, salary, tuition, financial aid, bank or card transactions, crypto, gift cards). Product prices in ads do not count.
-- `account` — access to and security of the recipient's accounts: sign-in, passwords, two-factor authentication, lockout or suspension, and recovery. Financial transactions (charges, balances, deposits) are `money`, not `account`.
+- `account` — access to and security of the recipient's own accounts, including bank cards and bank accounts: sign-in, passwords, two-factor authentication, lockout, freezes or suspension, access restrictions, and recovery. Financial transactions (charges, balances, deposits) are `money`, not `account`. A routine request to grant someone access to a shared tool is not `account`.
 - `deadline` — a time limit by which the recipient must take an action (pay, apply, register, submit, sign, respond, confirm), whether real or claimed. Limited-time promotions do not count.
 - `legal` — contracts, lawsuits, NDAs, subpoenas, terms-of-service that need acknowledgment.
-- `school` — anything from a university/school official channel (admissions, advisor, registrar, financial aid).
+- `school` — the email concerns the recipient's enrollment, registration, course selection, grades, academic standing, tuition, or financial aid. General school news, events, or library reminders do not count.
 - `hr` — offers, terminations, benefits, payroll, performance reviews, work-visa matters.
 - `external_link` — the body contains any http:// or https:// link, trusted or not.
 - `attachment` — the email references attachments (real or claimed).
-- `credential_request` — asks the recipient to provide or confirm a password, verification code, login details, or personal or account information.
+- `credential_request` — asks the recipient to enter or confirm an existing password, verification code, login details, or personal or account information. Following a reset link to choose a new password does not count.
 - `sensitive_personal_info` — exposes or requests SSN, address, DOB, medical, etc.
 
 If a flag could plausibly apply, include it. Do not skip a flag because you are "mostly sure" it does not apply.
