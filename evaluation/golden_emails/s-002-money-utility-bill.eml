@@ -1,0 +1,18 @@
+Message-ID: <s-002@staging.example.com>
+From: "City Utilities Billing" <billing@utilities.example.org>
+To: user@example.edu
+Subject: Your December bill: $132.75 due Dec 5
+Date: Tue, 17 Nov 2026 08:00:00 -0500
+Content-Type: text/plain; charset="utf-8"
+
+Dear customer,
+
+Your utility bill for the period Oct 15 - Nov 14 is ready.
+
+  Amount due: $132.75
+  Due date: December 5, 2026
+
+Payments received after the due date are subject to a $15 late fee.
+You can pay online at https://utilities.example.org/pay or by phone.
+
+City Utilities Billing

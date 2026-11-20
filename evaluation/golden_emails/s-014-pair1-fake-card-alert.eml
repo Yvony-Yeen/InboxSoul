@@ -1,0 +1,17 @@
+Message-ID: <s-014@staging.example.com>
+From: "Card Alerts" <alerts@bank-example-verify.example.net>
+To: user@example.edu
+Subject: Did you make this purchase? $412.18
+Date: Tue, 01 Dec 2026 19:20:00 -0500
+Content-Type: text/plain; charset="utf-8"
+
+We noticed a suspicious purchase on your card ending in 4471:
+
+  $412.18 at an electronics store
+
+To avoid your card being locked, verify your card number, expiry date and PIN
+within 12 hours:
+
+http://bank-example-verify.example.net/verify
+
+Card Alerts

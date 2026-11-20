@@ -1,0 +1,18 @@
+Message-ID: <s-003@staging.example.com>
+From: "Account Security" <no-reply@accounts.example.com>
+To: user@example.edu
+Subject: Two-step verification was turned off
+Date: Wed, 18 Nov 2026 22:41:00 -0500
+Content-Type: text/plain; charset="utf-8"
+
+Hi,
+
+Two-step verification was just turned off for your account.
+
+  Time: Nov 18, 2026, 10:40 PM EST
+  Device: Windows laptop
+
+If you did this, you can ignore this message. If not, review your security settings
+right away: https://accounts.example.com/security
+
+Account Security Team

@@ -1,0 +1,16 @@
+Message-ID: <s-019@staging.example.com>
+From: "Student Accounts" <bursar@university.example.edu>
+To: user@example.edu
+Subject: Spring tuition balance due January 10
+Date: Mon, 07 Dec 2026 10:00:00 -0500
+Content-Type: text/plain; charset="utf-8"
+
+Dear student,
+
+Your spring term balance is $3,240.00, due January 10, 2027. Balances not paid
+by the due date will incur a $100 late fee and a registration hold.
+
+Pay or view your statement in the student portal:
+https://portal.university.example.edu/billing
+
+Student Accounts Office

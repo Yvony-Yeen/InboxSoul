@@ -1,0 +1,15 @@
+Message-ID: <s-001@staging.example.com>
+From: "Order Support" <support@shop.example.com>
+To: user@example.edu
+Subject: Your refund of $86.40 has been processed
+Date: Mon, 16 Nov 2026 10:12:00 -0500
+Content-Type: text/plain; charset="utf-8"
+
+Hello,
+
+We've processed a refund of $86.40 for order #55120 (returned item: desk lamp).
+The amount should appear on your original payment card within 5-7 business days.
+
+No further action is needed.
+
+Order Support
