@@ -63,7 +63,11 @@ class OllamaClient:
         user: str,
         schema: type[T],
         temperature: float = 0.3,
+        seed: int | None = None,
     ) -> T:
+        options: dict[str, float | int] = {"temperature": temperature}
+        if seed is not None:
+            options["seed"] = seed
         response = await self.client.chat(
             model=self.model,
             messages=[
@@ -71,6 +75,6 @@ class OllamaClient:
                 {"role": "user", "content": user},
             ],
             format=schema.model_json_schema(),
-            options={"temperature": temperature},
+            options=options,
         )
         return schema.model_validate_json(response["message"]["content"])
