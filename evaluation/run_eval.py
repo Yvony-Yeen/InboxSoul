@@ -1,7 +1,10 @@
 """Unified evaluation entry — run the triage pipeline over the golden set and report.
 
 Run from repo root:
-    uv run python -m evaluation.run_eval --mode baseline --runs 3
+    uv run python -m evaluation.run_eval --mode baseline
+
+--runs defaults to 1: at temperature 0 with a fixed seed the output is deterministic (the
+2026-11-20 baseline gave identical results, confidence included, across 3 runs).
 
 Every run pins temperature and seed, loads both golden files, and writes
     evaluation/reports/<timestamp>-<mode>/report.json   (metrics + metadata)
@@ -324,7 +327,7 @@ def _render_md(report: dict[str, Any]) -> str:
 async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", choices=["baseline"], default="baseline")
-    ap.add_argument("--runs", type=int, default=3)
+    ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
