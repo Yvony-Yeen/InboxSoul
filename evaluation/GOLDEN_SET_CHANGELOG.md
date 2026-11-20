@@ -13,6 +13,7 @@ results after it — re-run the evaluation.
 | g-001 … g-017 (all `.eml`) | Real-looking recipient address in `To:` → `user@example.edu` | Public repo; remove a real-looking address. Brands and domains unchanged (legacy emails keep them by decision). |
 | `tests/fixtures/raw_emails/*.eml` (5 files) | Same `To:` replacement | Same reason. No test asserted the address. |
 | g-001, g-002, g-007, g-008, g-012, g-014 | Recipient's real first name in the greeting → fictional "Jordan" | Public repo; remove a real person's name. Only the greeting changes. |
+| `tests/fixtures/mock_data.py` | Same greeting-name replacement in a mock email body | Same reason. Not part of the golden set; recorded here to keep all privacy edits in one place. |
 
 ### Labels
 | id | Field | Before | After | Reason |

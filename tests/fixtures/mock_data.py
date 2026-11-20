@@ -23,7 +23,7 @@ def work_email() -> CleanedEmail:
         sender="pm@acme.com",
         subject="Q2 roadmap review on Friday 3pm?",
         body=(
-            "Hey Maan, can you confirm whether Friday 3pm works for the Q2 "
+            "Hey Jordan, can you confirm whether Friday 3pm works for the Q2 "
             "roadmap review? I'd like to lock in the agenda by tomorrow."
         ),
         received_at=datetime(2026, 5, 25, 9, 30),
