@@ -50,3 +50,6 @@ evaluation/reports/
 
 # Node (outlook_addin)
 node_modules/
+
+# Local Claude Code settings
+.claude/settings.local.json
