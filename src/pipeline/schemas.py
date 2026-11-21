@@ -90,8 +90,10 @@ class TriageOutput(BaseModel):
     spam_level: SpamLevel
     reply_needed: bool
     reply_type: ReplyType
-    # Agent 1 must flag conservatively — if unsure, include the flag rather than omit
-    risk_flags: list[RiskFlag] = Field(default_factory=list)
+    # Agent 1 must flag conservatively — if unsure, include the flag rather than omit.
+    # Required (no default): under format=schema the model skips optional keys, and a
+    # missing safety field must never default to "no risk".
+    risk_flags: list[RiskFlag]
     recommended_action: RecommendedAction
     confidence: float = Field(ge=0.0, le=1.0)
 

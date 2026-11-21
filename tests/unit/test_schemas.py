@@ -71,3 +71,14 @@ def test_unknown_reply_type_still_raises():
     payload = _valid_payload(reply_type="maybe_reply")
     with pytest.raises(ValidationError):
         TriageOutput.model_validate(payload)
+
+
+def test_risk_flags_is_required_in_json_schema():
+    assert "risk_flags" in TriageOutput.model_json_schema()["required"]
+
+
+def test_missing_risk_flags_raises():
+    payload = _valid_payload()
+    del payload["risk_flags"]
+    with pytest.raises(ValidationError):
+        TriageOutput.model_validate(payload)
