@@ -1,7 +1,7 @@
 # Known Issues
 
 Open problems found during the evaluation work. None of them is fixed yet. The
-action-routing issues (1–3) are planned to be fixed together in one change.
+action-routing issues (3–5) are planned to be fixed together in one change.
 
 **Data source.** Unless stated otherwise, numbers come from the baseline evaluation run on
 2026-11-20 at commit `928778c8` (`llama3.1:8b`, digest `46e0c10c039e`, Q4_K_M,
@@ -17,9 +17,71 @@ email was not sent to review. It is counted two ways: by `final_action`
 
 ---
 
+## Triage output
+
+### 1. `risk_flags` is optional in the JSON schema, so the model omits it
+
+**Description.** `TriageOutput.risk_flags` is declared with `Field(default_factory=list)`,
+so `TriageOutput.model_json_schema()` leaves it out of `required`. Agent 1 calls Ollama
+with `format=<that schema>`. Under schema-constrained decoding the model may skip an
+optional key, and when it does, Pydantic silently fills in `[]`. A missing safety field
+is turned into "no risk". Every other `TriageOutput` field is required.
+
+**Location.** `src/pipeline/schemas.py:94` (field declaration); the schema is sent in
+`src/llm/ollama_client.py:60-79` (`chat_json`).
+
+**Evidence.** Format diagnostic, 2026-11-20, commit `cbf7a52f`, same prompt (sha
+`2b60d0786797`), model, temperature 0 and seed 42 as the baseline. Report directory:
+`evaluation/reports/2026-11-20T22-04-08-587707+00-00-format_diagnostic/` (local only).
+Each of the 47 emails was run twice, once with `format=schema` and once with
+`format=None`.
+- With `format=schema`, the `risk_flags` key is absent from **40 of 47** raw replies. The
+  model never wrote an explicit `"risk_flags": []`; when the key appears (7 emails), it
+  always contains flags. No other field was ever omitted.
+- With `format=None`, the key is present in 47 of 47 replies, and 0 replies failed
+  validation.
+- Example, g-002. The two raw replies are identical except that the `format=None` reply
+  contains `"risk_flags": ["hr", "deadline"]` between `reply_type` and
+  `recommended_action`, and the `format=schema` reply has no `risk_flags` line.
+
+| Metric | format=schema | format=None |
+|---|---|---|
+| High-risk precision | 12/12 = 100% | 44/48 = 92% |
+| High-risk recall | 12/62 = 19% | 44/62 = 71% |
+| Macro recall (6 flags) | 16% | 64% |
+| `external_link` recall | 0/21 | 5/21 |
+| Not routed to review, by `final_action` | 11/34 | 5/34 |
+| Not routed to review, by executor | 25/34 | 6/34 |
+
+`category` and `spam_level` were identical in both arms for all 47 emails.
+
+**Planned fix.** Remove the default so that `risk_flags` is required in the JSON schema,
+and add a unit test asserting that `risk_flags` is in `model_json_schema()["required"]`.
+Then re-run the baseline at the fixed commit and compare.
+
+### 2. `external_link` is left to the LLM and is rarely detected
+
+**Description.** `external_link` is defined as "any http/https link in the body"
+(`evaluation/LABELING_GUIDE.md`). This is a purely mechanical property, but it is
+currently predicted by the LLM.
+
+**Location.** `skills/triage.md` (flag definition); no code sets the flag.
+
+**Observed impact.** `external_link` recall is 0/21 in the baseline. With `format=None`,
+where the model does output the `risk_flags` key, it is still only 5/21 (format
+diagnostic above).
+
+**Planned fix.** Set `external_link` deterministically in code, based on whether the
+cleaned body contains an http/https link, and stop relying on the LLM for it. The same
+reasoning applies to `attachment`. The model cannot see attachments (ingestion does not
+pass them on), and the flag is currently excluded from all metrics. It should be set in
+code from the MIME structure as well.
+
+---
+
 ## Action routing
 
-### 1. The executor ignores `final_action`
+### 3. The executor ignores `final_action`
 
 **Description.** `GmailExecutor._decide` chooses labels from the predicted risk flags,
 Agent 2's decision and the safety override only. It never reads `final_action` or
@@ -37,7 +99,7 @@ s-013, s-017, s-020, s-022.
 **Planned fix.** Make `_decide` respect `final_action`: `ask_user_check` → keep in inbox
 with `InboxSoul/NeedsReview`. Quarantine only when Agent 2 decided `move_to_junk`.
 
-### 2. Two independent spam judgments (Agent 2 and the executor)
+### 4. Two independent spam judgments (Agent 2 and the executor)
 
 **Description.** `CATEGORY_LABELS` maps `Category.SPAM` to `InboxSoul/Quarantine`. On the
 pass path, `_decide` labels and archives by category. So an email that Agent 2 passed,
@@ -55,7 +117,7 @@ offline check with a fake LLM; it was not exercised in the baseline.
 **Planned fix.** Leave junk decisions to Agent 2 alone. On the pass path, a `spam`
 category should not map to the quarantine label (for example, map it to review instead).
 
-### 3. `_resolve_action` lets the model bypass Agent 2's junk rule
+### 5. `_resolve_action` lets the model bypass Agent 2's junk rule
 
 **Description.** When Agent 2 returns `pass` and Agent 3 returns `no_reply`,
 `Orchestrator._resolve_action` keeps the model's `recommended_action`. If the model
@@ -72,7 +134,7 @@ decide junk. All 10 were predicted `not_spam` at confidence 0.95.
 - 6 do not: g-009, g-013, g-016, s-024, s-028, s-030.
 
 For 5 of the 6 (all except s-024), the gold `final_action` is `no_action`. Because of
-issue 1, the executor did not quarantine any of these 10; it archived them under their
+issue 3, the executor did not quarantine any of these 10; it archived them under their
 category label.
 
 **Planned fix.** On the Agent 2 = `pass` path, never let `final_action` become
@@ -83,7 +145,7 @@ only Agent 2 can produce a junk decision.
 
 ## Safety and robustness
 
-### 4. Safety rules read only the LLM's `risk_flags`, never the raw email
+### 6. Safety rules read only the LLM's `risk_flags`, never the raw email
 
 **Description.** `safety.scan` takes only the `TriageOutput`. Like Agent 2, it decides
 based solely on the risk flags the model predicted. No check runs on the raw subject or
@@ -102,7 +164,7 @@ combine it with the model's flags. This touches `src/safety/`, which needs a wri
 plan first. It also has to fit CLAUDE.md's rule that Agents 2 and 3 do not re-read the
 raw email.
 
-### 5. No fail-closed handling when Pydantic validation fails
+### 7. No fail-closed handling when Pydantic validation fails
 
 **Description.** `OllamaClient.chat_json` calls `model_validate_json` on the model reply.
 A reply that fails validation raises an exception, and no caller turns it into a safe
@@ -123,7 +185,7 @@ removed, the model is changed, or the reply is truncated.
 `InboxSoul/NeedsReview`, keep it in the inbox, log the error, and continue with the rest
 of the batch.
 
-### 6. Subject decoding bug: raw UTF-8 headers become U+FFFD
+### 8. Subject decoding bug: raw UTF-8 headers become U+FFFD
 
 **Description.** `parse_raw_message` parses with the default `compat32` policy. Subject
 headers that contain raw (unencoded) 8-bit UTF-8 come back as `Header` objects with an
@@ -145,7 +207,7 @@ been checked.
 **Planned fix.** Parse with `email.policy.default` (or decode raw header bytes as UTF-8),
 add a unit test with a raw UTF-8 subject, and re-run the evaluation as a separate change.
 
-### 7. RAG uses ChromaDB's default L2 distance and no nomic-embed-text task prefixes
+### 9. RAG uses ChromaDB's default L2 distance and no nomic-embed-text task prefixes
 
 **Description.** `ChromaStore` creates collections without `hnsw:space`, so ChromaDB uses
 its default L2 distance. `OllamaEmbedder` sends text to `nomic-embed-text` without the
