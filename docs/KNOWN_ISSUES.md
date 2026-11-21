@@ -1,6 +1,6 @@
 # Known Issues
 
-Open problems found during the evaluation work. None of them is fixed yet. The
+Problems found during the evaluation work. Issue 1 is fixed; the others are open. The
 action-routing issues (3–5) are planned to be fixed together in one change.
 
 **Data source.** Unless stated otherwise, numbers come from the baseline evaluation run on
@@ -19,7 +19,7 @@ email was not sent to review. It is counted two ways: by `final_action`
 
 ## Triage output
 
-### 1. `risk_flags` is optional in the JSON schema, so the model omits it
+### 1. `risk_flags` is optional in the JSON schema, so the model omits it — FIXED
 
 **Description.** `TriageOutput.risk_flags` is declared with `Field(default_factory=list)`,
 so `TriageOutput.model_json_schema()` leaves it out of `required`. Agent 1 calls Ollama
@@ -55,9 +55,27 @@ Each of the 47 emails was run twice, once with `format=schema` and once with
 
 `category` and `spam_level` were identical in both arms for all 47 emails.
 
-**Planned fix.** Remove the default so that `risk_flags` is required in the JSON schema,
-and add a unit test asserting that `risk_flags` is in `model_json_schema()["required"]`.
-Then re-run the baseline at the fixed commit and compare.
+**Fix.** Commit `2d4348c1` removes the default, so `risk_flags` is required in the JSON
+schema. Two unit tests were added: one asserts that `risk_flags` is in
+`model_json_schema()["required"]`, and one asserts that a payload without `risk_flags`
+fails validation.
+
+**Result.** The baseline was re-run at commit `d9293d34` with the same prompt (sha
+`2b60d0786797`), model digest, temperature 0 and seed 42 (`--runs 1`). Report directory:
+`evaluation/reports/2026-11-21T01-37-13-440624+00-00-baseline/` (local only).
+- `risk_flags` is present in 47 of 47 raw replies. It is an explicit `[]` in 17 of them.
+- 0 replies failed validation.
+- All 47 raw replies are byte-identical to the `format=None` replies from the format
+  diagnostic.
+
+| Metric | Before fix (`928778c8`) | After fix (`d9293d34`) |
+|---|---|---|
+| High-risk precision | 12/12 = 100% | 44/48 = 92% |
+| High-risk recall | 12/62 = 19% | 44/62 = 71% |
+| Macro recall (6 flags) | 16.1% | 64.4% |
+| Not routed to review, by `final_action` | 11/34 | 5/34 |
+| Not routed to review, by executor | 25/34 | 6/34 |
+| Prompt injection, system level | 2/4 | 2/4 |
 
 ### 2. `external_link` is left to the LLM and is rarely detected
 
