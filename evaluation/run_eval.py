@@ -9,7 +9,7 @@ Run from repo root:
 Every run pins temperature and seed, loads both golden files, and writes
     evaluation/reports/<timestamp>-<mode>/report.json   (metrics + metadata)
     evaluation/reports/<timestamp>-<mode>/report.md     (human-readable summary)
-    evaluation/reports/<timestamp>-<mode>/per_email.json (every prediction, every run)
+    evaluation/reports/<timestamp>-<mode>/per_email.json (every prediction and raw model reply, every run)
 
 Agent 4 (draft) is replaced by a no-op: it does not affect triage or final_action, and
 skipping it removes extra non-deterministic LLM calls.
@@ -85,6 +85,23 @@ class _PinnedLLM:
         )
 
 
+class _RawCapture:
+    """Wraps ollama.AsyncClient to keep the last raw reply; requests still go through
+    OllamaClient.chat_json unchanged."""
+
+    def __init__(self, inner) -> None:
+        self._inner = inner
+        self.last: str | None = None
+
+    async def chat(self, *args, **kwargs):
+        response = await self._inner.chat(*args, **kwargs)
+        self.last = response["message"]["content"]
+        return response
+
+    def __getattr__(self, name: str):
+        return getattr(self._inner, name)
+
+
 class _NoDraft:
     async def run(self, _draft_input) -> None:
         return None
@@ -140,11 +157,12 @@ def _executor_decision(result: ProcessResult) -> str:
     return "pass"
 
 
-async def _predict(orch: Orchestrator, row: dict[str, Any]) -> dict[str, Any]:
+async def _predict(orch: Orchestrator, capture: _RawCapture, row: dict[str, Any]) -> dict[str, Any]:
+    capture.last = None
     try:
         r = await orch.process_email((REPO / row["raw_email_path"]).read_bytes())
     except Exception as e:
-        return {"error": f"{type(e).__name__}: {e}"}
+        return {"error": f"{type(e).__name__}: {e}", "raw": capture.last}
     return {
         "error": None,
         "category": r.triage.category.value,
@@ -156,6 +174,7 @@ async def _predict(orch: Orchestrator, row: dict[str, Any]) -> dict[str, Any]:
         "risk_flags": sorted(f.value for f in r.triage.risk_flags),
         "confidence": r.triage.confidence,
         "executor_decision": _executor_decision(r),
+        "raw": capture.last,
     }
 
 
@@ -334,6 +353,8 @@ async def main() -> None:
 
     rows = _load_golden()
     client = OllamaClient()
+    capture = _RawCapture(client.client)
+    client.client = capture
     llm = _PinnedLLM(client, args.temperature, args.seed)
     orch = Orchestrator(
         triage_runner=partial(run_triage, llm_client=llm),
@@ -346,7 +367,7 @@ async def main() -> None:
     for i in range(args.runs):
         preds = []
         for row in rows:
-            preds.append(await _predict(orch, row))
+            preds.append(await _predict(orch, capture, row))
             print(f"run {i + 1}/{args.runs} {row['id']}", flush=True)
         runs.append(preds)
 
